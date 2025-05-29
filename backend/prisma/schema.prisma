@@ -8,9 +8,51 @@ datasource db {
 }
 
 model User {
-  id           Int    @id @default(autoincrement())
-  name         String
-  email        String @unique
-  passwordHash String
-  subdomain    String @unique
+  id                String         @id @default(uuid())
+  name              String
+  email             String         @unique
+  passwordHash      String
+  subdomain         String?        @unique
+  isVerified        Boolean        @default(false)
+  userSettingsId    String?        @unique
+  verificationCodes Verification[]
+  Session           Session[]
+
+  settings UserSettings? @relation("UserSettingsRelation", fields: [userSettingsId], references: [id])
+}
+
+enum VerificationType {
+  EMAIL_VERIFICATION
+  RESET_PASSWORD
+}
+
+model Verification {
+  id        String           @id @default(uuid())
+  userId    String
+  code      String           @unique
+  type      VerificationType
+  createdAt DateTime         @default(now())
+  expiresAt DateTime
+
+  User User @relation(fields: [userId], references: [id])
+}
+
+model UserSettings {
+  id           String  @id @default(uuid())
+  user         User?   @relation("UserSettingsRelation")
+  themeColor   String  @default("000")
+  timezone     String  @default("EDT")
+  isPagePublic Boolean @default(false)
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String?  @unique
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  user User @relation(fields: [userId], references: [id])
 }
